@@ -1,0 +1,82 @@
+<head>
+    <meta charset="utf-8" />
+</head>
+<body>
+     
+    <h1>New row:</h1>
+    <form>
+        <p>
+            Please, input your surname, name, and patronymic.
+        </p>
+        <input type="text" id="NSP" name="NSP">
+        <p>
+            Please, input your date of birth without zeros the number of times corresponding to the length of your surname, name, and patronymic.
+        </p>
+        <input type="text" id="birthdate" name="birthdate">
+        <p>
+            <input type="button" onclick="getResult()" value="Compute the result">
+        </p>
+        <input type="button" onclick="sendForm()" value="Send to server">
+    </form>
+    <p id="output"></p>
+    <p>
+        Entropy:
+    </p>
+    <p id="entropy"></p>
+    <h1>Old rows:</h1>
+    <ul id="rows">
+        <% for(var i=0; i<outputs.length / 2 - 1; i++) {%>
+        <li><%=outputs[2 * i] %></li>
+        <%=outputs[2 * i+1] %>
+        <%} %>
+    </ul>
+    <script>
+        let dict;
+        let output;
+        let arrayOfLetters;
+        let arrayOfNumbers;
+        function getResult() {
+            dict = {};
+            arrayOfNumbers = birthdate.value.split("");
+            output = "";
+            arrayOfLetters = NSP.value.split("");
+            document.getElementById("output").innerHTML = output;
+            for(let i = 0; i < arrayOfLetters.length; i++) {
+                arrayOfNumbers[i] = parseInt(arrayOfNumbers[i], 10);
+                output += arrayOfLetters[i].repeat(arrayOfNumbers[i]);
+                if (arrayOfLetters[i] in dict)
+                    dict[arrayOfLetters[i]] += arrayOfNumbers[i];
+                else
+                    dict[arrayOfLetters[i]] = arrayOfNumbers[i];
+            }
+            document.getElementById("output").innerHTML = output;
+            document.getElementById("entropy").innerHTML = dict;
+            let ent = 0;
+            for(const key in dict) {
+                dict[key] /= output.length;
+                ent += dict[key] * Math.log(dict[key]);
+            }
+            document.getElementById("entropy").innerHTML = -ent;
+        }
+        function sendForm() {
+            fetch('/a', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    NSP: document.getElementById("NSP")["value"],
+                    birthdate: document.getElementById("birthdate")["value"]
+                })
+            }).then((response) => {
+                return response.json();
+            }).then((data) => {
+                let rows_list = document.getElementById("rows");
+                let li = document.createElement("li");
+                li.innerHTML = "<span>Name: " + data.name + "</span></br><span>Entropy: " + data.entropy + "</span>";
+                rows_list.appendChild(li);
+            });
+        }
+    </script>
+</body>
+<html>
