@@ -12,7 +12,14 @@ app.set('view engine', 'ejs');
 
 // создаем парсер для данных application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({extended: false}));
-app.use( bodyParser.json());
+app.use(bodyParser.json());
+
+const WebSocketServer = require("ws");
+
+// WebSocket-сервер на порту 8081
+const webSocketServer = new WebSocketServer.Server({
+    port: 8080
+});
 // определяем обработчик для маршрута "/"
 app.get("/", function(request, response){
     let rows = fs.readFileSync("database.txt", 'utf-8').split('\n');
@@ -24,8 +31,7 @@ app.get("/", function(request, response){
 app.post("/a",function (request, response) {
     let dict = {};
     let output;
-    console.log(request.body);
-    let arrayOfLetters = request.body.NSP.split("");
+    let arrayOfLetters = request.body.NSP;
     let arrayOfNumbers = request.body.birthdate.split("");
     output = "";
     for(let i = 0; i < arrayOfLetters.length; i++) {
@@ -45,10 +51,14 @@ app.post("/a",function (request, response) {
     writeableStream.write('Output: ' + output + "\n");
     writeableStream.write('Entropy: ' + (-ent).toString()+ "\n");
     writeableStream.end();
-    response.send(JSON.stringify({
-        "name": output,
-        "entropy": (-ent).toString()
-    }));
+    webSocketServer.clients.forEach((client) => {
+        if (client.readyState === WebSocketServer.OPEN) {
+            client.send(JSON.stringify({
+                "output": output,
+                "entropy": (-ent).toString()
+            }));
+        }
+    });
 });
 // начинаем прослушивать подключения на 3000 порту
-app.listen(8080);
+app.listen(3000);

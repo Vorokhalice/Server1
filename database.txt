@@ -1,0 +1,6 @@
+Output: 
+Entropy: 0
+Output: 
+Entropy: NaN
+Output: dssfffdssfff
+Entropy: 1.0114042647073518
